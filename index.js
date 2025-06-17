@@ -29,6 +29,46 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    // mongodb collections 
+    const userCollection = client.db('roadForge-db').collection('users')
+    const roadmapCollection = client.db('roadForge-db').collection('roadmap-item')
+
+
+    // *** user related api
+
+    app.post('/api/users',async(req,res) => {
+        const newUser = req.body;
+        const email = newUser.email;
+
+        // varify user
+        if(!email){
+            return res.status(400).send({meassage : 'Email Is Required'})
+        }
+
+        // if User is already exist
+        const existingUser = await userCollection.findOne({email});
+
+        if(existingUser){
+            return res.status(200).send({meassage : 'User Already Exist in database'})
+        }
+
+        const result = await userCollection.insertOne(newUser);
+     res.send(result)
+    })
+
+
+    app.get('/api/users',async(req,res) => {
+          const result = await userCollection.find().toArray();
+          res.send(result)
+    })
+
+
+    // **** roadmap-Item Related Api
+    app.get('/roadmap-item',async(req,res) => {
+        const result = await roadmapCollection.find().toArray()
+        res.send(result)
+    })
+
 
 
 
