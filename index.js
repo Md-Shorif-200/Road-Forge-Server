@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -29,9 +29,10 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    // mongodb collections 
-    const userCollection = client.db('roadForge-db').collection('users')
-    const roadmapCollection = client.db('roadForge-db').collection('roadmap-item')
+    // !mongodb collections 
+    const userCollection = client.db('roadForge-db').collection('users');
+    const roadmapCollection = client.db('roadForge-db').collection('roadmap-item');
+    const upVoteCollections = client.db('roadForge-db').collection('upvotes')
 
 
     // *** user related api
@@ -62,13 +63,59 @@ async function run() {
           res.send(result)
     })
 
-
+    
     // **** roadmap-Item Related Api
     app.get('/roadmap-item',async(req,res) => {
-        const result = await roadmapCollection.find().toArray()
-        res.send(result)
+      const result = await roadmapCollection.find().toArray()
+      res.send(result)
+    })
+        // update data
+    app.patch('/roadmap-item/upvote/:id',async(req,res) => {
+         const data = req.body;
+         const id = req.params.id;
+         const email = data.userEmail;
+         const query = {_id : new ObjectId(id)}
+            // if email not find
+         if(!email || !id){
+          return res.status(400).send({message : 'invlid reqest . please log in and try agian!'})
+         }
+
+        
+        
+        //  cheack if user already upvoted
+        const roadmapItem = await roadmapCollection.findOne(query)
+        if(roadmapItem.upvotedBy.includes(email)){
+             return res.status(400).send({message : 'you have already upvoted'})
+        }
+
+        // increment upvoted cound and push user email 
+              const result = await roadmapCollection.updateOne(
+                query,
+                {
+                  $inc : {upvotes : 1},
+                  $push : {upvotedBy : email},
+                }
+              );
+
+              res.send(result)
+          
     })
 
+
+    // *** Upvote related api
+
+    // app.post('/api/upvote',async(req,res) => {
+    //    const upvoteData = req.body;
+    //    const userEmail = upvoteData.email;
+    //    const result = await upVoteCollections.insertOne();
+    //     res.send(result)
+    // })
+
+
+       app.get('/api/upvote',async(req,res) => {
+        const result = await upVoteCollections.find().toArray()
+        res.send(result)
+    })
 
 
 
