@@ -32,7 +32,7 @@ async function run() {
     // !mongodb collections 
     const userCollection = client.db('roadForge-db').collection('users');
     const roadmapCollection = client.db('roadForge-db').collection('roadmap-item');
-    const upVoteCollections = client.db('roadForge-db').collection('upvotes')
+    const commentCollections = client.db('roadForge-db').collection('comments')
 
 
     // *** user related api
@@ -102,21 +102,40 @@ async function run() {
     })
 
 
-    // *** Upvote related api
+    // *** comments related api
 
-    // app.post('/api/upvote',async(req,res) => {
-    //    const upvoteData = req.body;
-    //    const userEmail = upvoteData.email;
-    //    const result = await upVoteCollections.insertOne();
-    //     res.send(result)
-    // })
-
-
-       app.get('/api/upvote',async(req,res) => {
-        const result = await upVoteCollections.find().toArray()
+    app.post('/api/comments',async(req,res) => {
+        const commentData = req.body;
+       const result = await commentCollections.insertOne(commentData);
         res.send(result)
     })
 
+
+       app.get('/api/comments',async(req,res) => {
+        const result = await commentCollections.find().toArray()
+        res.send(result)
+    })
+
+
+    // edit comments
+    app.patch('/api/comments/edit/:id', async(req,res) => {
+       const data = req.body;
+       const id = req.params.id;
+       const query = {_id : new ObjectId(id)};
+
+       const updatedDoc = {
+          $set : {
+              comment : data.updatedComment
+          }
+       }
+
+       const result = await commentCollections.updateOne(query,updatedDoc);
+       res.send(result)
+       
+
+    })
+
+    // delt
 
 
 
