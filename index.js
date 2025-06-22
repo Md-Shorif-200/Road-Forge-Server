@@ -135,7 +135,13 @@ async function run() {
 
     })
 
-    // delt
+    // delete comments 
+    app.delete('/api/comments/delete/:id', async(req,res) => {
+         const id = req.params.id;
+         const query = {_id : new ObjectId(id)};
+         const result = await commentCollections.deleteOne(query);
+         res.send(result)
+    })
 
 
 
