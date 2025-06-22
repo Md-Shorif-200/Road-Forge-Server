@@ -66,7 +66,23 @@ async function run() {
     
     // **** roadmap-Item Related Api
     app.get('/roadmap-item',async(req,res) => {
-      const result = await roadmapCollection.find().toArray()
+        const {filter,sort} = req.query;
+        const filterQuery = {};
+        let sortQuery = {}
+
+        // check filter value
+        if(filter && filter !== 'allItem'){
+           filterQuery.status = filter
+        }
+
+
+        // sorting system
+        if(sort === 'upvote'){        
+          sortQuery = {upvotes : -1}
+        }
+
+
+      const result = await roadmapCollection.find(filterQuery).sort(sortQuery).toArray()
       res.send(result)
     })
         // update data
