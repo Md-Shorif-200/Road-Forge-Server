@@ -121,12 +121,45 @@ async function run() {
     // *** comments related api
 
     app.post('/api/comments',async(req,res) => {
-        const commentData = req.body;
-       const result = await commentCollections.insertOne(commentData);
-        res.send(result)
+        const data = req.body;
+         console.log(data);
+         
+      //  check data is reply message
+        try {
+           if(data.replyId){
+                const query = {_id : new ObjectId(data.replyId)};
+                const id =  `${Date.now()}`
+                const reply = {
+                   id : id,
+                   name : data.name,
+                   email : data.email,
+                   photo : data.photo,
+                   replyMessage : data.replyMessage,
+                   time : data.time
+                }
+
+                const updatedDoc = {
+                    $push : {replies : reply}
+                }
+                      // push reply data to comment collection
+                const result = await  commentCollections.updateOne(
+                        query,updatedDoc
+                )
+
+                res.send(result)
+         }else{
+           const result = await commentCollections.insertOne(data);
+            res.send(result)
+           
+         }
+        } catch (error) {
+          
+        }
+        
+
     })
 
-
+        // find all comments
        app.get('/api/comments',async(req,res) => {
         const result = await commentCollections.find().toArray()
         res.send(result)
@@ -158,6 +191,10 @@ async function run() {
          const result = await commentCollections.deleteOne(query);
          res.send(result)
     })
+
+    // replay related api
+
+  
 
 
 
