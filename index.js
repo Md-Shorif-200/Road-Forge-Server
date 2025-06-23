@@ -122,13 +122,14 @@ async function run() {
 
     app.post('/api/comments',async(req,res) => {
         const data = req.body;
-         console.log(data);
+        //  console.log(data);
          
-      //  check data is reply message
-        try {
+         try {
+          //  ****  check data is reply message
            if(data.replyId){
                 const query = {_id : new ObjectId(data.replyId)};
                 const id =  `${Date.now()}`
+                // creat reply object
                 const reply = {
                    id : id,
                    name : data.name,
@@ -147,13 +148,61 @@ async function run() {
                 )
 
                 res.send(result)
-         }else{
+         }
+         else if(data.nestedReplyId){
+                        // console.log(data.commentId,data.nestedReplyId);
+                        
+                             //**** check data is nested-reply
+                     const query = {_id : new ObjectId(data?.commentId)}
+                     // find main comment
+                     const  comment = await commentCollections.findOne(query)
+                       console.log('comment data ' , comment);
+                        
+                    // find nested-reply object 
+                    const  nestedReply = comment?.replies?.find(replyData => replyData?.id == data?.nestedReplyId) 
+                    console.log( 'nested reply' , nestedReply);
+                     
+
+                    // check nested-replies array is Exist
+                     if(!nestedReply.nestedReplies){
+                       nestedReply.nestedReplies = []
+                     }
+
+                    
+                     // creat nested reply object 
+                     const id = `nested_reply_${Date.now()}`;
+                    const reply = {
+                      id : id,
+                      name : data.name,
+                     email : data.email,
+                     photo : data.photo,
+                     message : data.message,
+                     time : data.time
+                    }
+
+                    // push object to nestedReplies
+                    nestedReply.nestedReplies.push(reply)
+
+                    const updatedDoc = {
+                      $set : {replies : comment.replies}
+                    }
+
+                    // push nested reply data to comment collection
+                    const result = await commentCollections.updateOne(
+                      query,updatedDoc
+                    )
+
+                    res.send(result)
+
+         }
+         
+         else{
            const result = await commentCollections.insertOne(data);
             res.send(result)
            
          }
         } catch (error) {
-          
+             return res.status(404).send({message : 'something is wrong'})
         }
         
 
